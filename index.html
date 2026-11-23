@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Token Explorer — Tokenizer, Vocabulary Builder & 3D Embeddings</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom Styles & Token Color Schemes -->
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%220%22%20100%20100%22><text y=%22.9em%22 font-size=%2290%22>🧩</text></svg>">
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Left Side: Clean, Uncluttered, Spacious Brand Logo -->
+        <div class="flex items-center gap-3.5 flex-shrink-0 pr-6 lg:pr-8 border-r border-slate-200/80 dark:border-slate-800">
+          <!-- Subtle & Professional 3D Token Prism Logo -->
+          <div class="logo-prism-container relative w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500/10 via-blue-600/10 to-purple-600/10 dark:from-indigo-500/20 dark:via-blue-600/20 dark:to-purple-600/20 border border-indigo-200/80 dark:border-indigo-500/30 shadow-sm shadow-indigo-500/5 flex items-center justify-center flex-shrink-0 group hover:border-indigo-400/80 dark:hover:border-indigo-400/80 hover:shadow-indigo-500/15 transition-all duration-300">
+            <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="prismTop" x1="4.5" y1="3.5" x2="27.5" y2="16.5" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#818CF8"/>
+                  <stop offset="1" stop-color="#6366F1"/>
+                </linearGradient>
+                <linearGradient id="prismLeft" x1="4.5" y1="10" x2="16" y2="29.5" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#4F46E5"/>
+                  <stop offset="1" stop-color="#3730A3"/>
+                </linearGradient>
+                <linearGradient id="prismRight" x1="27.5" y1="10" x2="16" y2="29.5" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#6366F1"/>
+                  <stop offset="1" stop-color="#4338CA"/>
+                </linearGradient>
+              </defs>
+              <!-- Top Prism Facet -->
+              <path d="M16 3.5L27.5 10L16 16.5L4.5 10L16 3.5Z" fill="url(#prismTop)" stroke="#A5B4FC" stroke-width="0.8" stroke-linejoin="round"/>
+              <!-- Left Subword Facet -->
+              <path d="M4.5 10L16 16.5V29.5L4.5 23V10Z" fill="url(#prismLeft)" stroke="#818CF8" stroke-width="0.8" stroke-linejoin="round"/>
+              <!-- Right Subword Facet -->
+              <path d="M16 16.5L27.5 10V23L16 29.5V16.5Z" fill="url(#prismRight)" stroke="#A5B4FC" stroke-width="0.8" stroke-linejoin="round"/>
+              <!-- Token BPE Split Line -->
+              <path d="M10.25 6.75L21.75 13.25" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="2 1.5"/>
+              <path d="M16 16.5V29.5" stroke="#FFFFFF" stroke-opacity="0.4" stroke-width="1.2"/>
+              <!-- Central Vector Embedding Nexus -->
+              <circle cx="16" cy="16.5" r="2.2" fill="#FFFFFF"/>
+              <circle cx="16" cy="16.5" r="3.5" stroke="#93C5FD" stroke-width="0.8" stroke-opacity="0.8"/>
+            </svg>
+          </div>
+
+          <!-- Clean Single-Line Title (Zero Clutter, No Subtitle Wrap) -->
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold text-base lg:text-lg tracking-tight text-slate-900 dark:text-white whitespace-nowrap">Token Explorer</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 border border-indigo-200/70 dark:border-indigo-800/70 font-mono whitespace-nowrap">v2.5</span>
+          </div>
+        </div>
+
+        <!-- Center Nav Tabs (Spacious, Clean & Non-repetitive) -->
+        <nav class="hidden lg:flex items-center space-x-1 lg:space-x-1.5 flex-1 justify-start ml-4 lg:ml-6">
+          <!-- Tab 1: Explorer -->
+          <button class="nav-tab px-3 py-1.5 text-xs font-semibold rounded-lg border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 flex items-center gap-1.5 transition-all whitespace-nowrap" data-tab="explorer">
+            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            Explorer
+          </button>
+          
+          <!-- Tab 2: Build Vocabulary -->
+          <button class="nav-tab px-3 py-1.5 text-xs font-semibold rounded-lg border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1.5 transition-all whitespace-nowrap" data-tab="vocab">
+            <svg class="w-3.5 h-3.5 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+            </svg>
+            Vocabulary
+          </button>
+
+          <!-- Tab 3: 3D Embeddings -->
+          <button class="nav-tab px-3 py-1.5 text-xs font-semibold rounded-lg border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1.5 transition-all whitespace-nowrap" data-tab="embeddings">
+            <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
+            </svg>
+            3D Space
+          </button>
+
+          <!-- Tab 4: Comparison -->
+          <button class="nav-tab px-3 py-1.5 text-xs font-semibold rounded-lg border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1.5 transition-all whitespace-nowrap" data-tab="comparison">
+            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            Compare
+          </button>
+
+          <!-- Tab 5: Logits & Sampling -->
+          <button class="nav-tab px-3 py-1.5 text-xs font-semibold rounded-lg border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1.5 transition-all whitespace-nowrap" data-tab="predictor">
+            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            Sampling
+          </button>
+
+          <!-- Tab 6: Cost -->
+          <button class="nav-tab px-3 py-1.5 text-xs font-semibold rounded-lg border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1.5 transition-all whitespace-nowrap" data-tab="cost">
+            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Cost
+          </button>
+
+          <!-- Tab 7: Guide -->
+          <button class="nav-tab px-3 py-1.5 text-xs font-semibold rounded-lg border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1.5 transition-all whitespace-nowrap" data-tab="guide">
+            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+            Guide
+          </button>
+        </nav>
+
+        <!-- Right Action Controls (Never Wraps / Shrinks) -->
+        <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0 ml-4">
+          <!-- Model Selector -->
+          <div class="relative">
+            <select id="modelSelect" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs sm:text-sm rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium whitespace-nowrap">
+              <option value="gpt-4o">OpenAI GPT-4o (o200k_base)</option>
+              <option value="gpt-4">OpenAI GPT-4 (cl100k_base)</option>
+              <option value="llama-3">Meta Llama 3 (128k)</option>
+              <option value="claude-3-5">Claude 3.5 Sonnet</option>
+              <option value="gemma-2">Google Gemma 2 (256k)</option>
+              <option value="gpt-2">OpenAI GPT-2 (r50k_base)</option>
+            </select>
+          </div>
+
+          <!-- Theme Toggle Button -->
+          <button id="themeToggle" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex-shrink-0" title="Toggle Light/Dark Theme">
+            <span id="themeIcon">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Mobile/Tablet Nav Row -->
+      <div class="flex lg:hidden overflow-x-auto py-2 space-x-1 border-t border-slate-100 dark:border-slate-800">
+        <button class="nav-tab whitespace-nowrap px-2.5 py-1 text-xs font-semibold rounded-md border-b-2 border-blue-600 text-blue-600 dark:text-blue-400" data-tab="explorer">Explorer</button>
+        <button class="nav-tab whitespace-nowrap px-2.5 py-1 text-xs font-semibold rounded-md text-slate-500" data-tab="vocab">Vocabulary</button>
+        <button class="nav-tab whitespace-nowrap px-2.5 py-1 text-xs font-semibold rounded-md text-slate-500" data-tab="embeddings">3D Space</button>
+        <button class="nav-tab whitespace-nowrap px-2.5 py-1 text-xs font-semibold rounded-md text-slate-500" data-tab="comparison">Compare</button>
+        <button class="nav-tab whitespace-nowrap px-2.5 py-1 text-xs font-semibold rounded-md text-slate-500" data-tab="predictor">Sampling</button>
+        <button class="nav-tab whitespace-nowrap px-2.5 py-1 text-xs font-semibold rounded-md text-slate-500" data-tab="cost">Cost</button>
+        <button class="nav-tab whitespace-nowrap px-2.5 py-1 text-xs font-semibold rounded-md text-slate-500" data-tab="guide">Guide</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- =====================================================
+         TAB 1: TOKEN EXPLORER
+         ===================================================== -->
+    <div id="tabExplorer" class="space-y-6">
+
+      <!-- Presets Pill Bar (Spacious, Elegant, Decluttered) -->
+      <div class="flex items-center gap-2 overflow-x-auto p-2 rounded-xl bg-slate-100/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800/80 mb-4 text-xs">
+        <span class="text-slate-400 font-semibold whitespace-nowrap flex items-center gap-1.5 pl-1 mr-1">
+          <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          Presets:
+        </span>
+        <button class="preset-pill whitespace-nowrap px-3 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium border border-slate-200/70 dark:border-slate-700/60 shadow-xs transition-colors" data-preset="english">🦊 English (Fox)</button>
+        <button class="preset-pill whitespace-nowrap px-3 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium border border-slate-200/70 dark:border-slate-700/60 shadow-xs transition-colors" data-preset="multilingual">🌍 Multilingual</button>
+        <button class="preset-pill whitespace-nowrap px-3 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium border border-slate-200/70 dark:border-slate-700/60 shadow-xs transition-colors" data-preset="code">🐍 Python Code</button>
+        <button class="preset-pill whitespace-nowrap px-3 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium border border-slate-200/70 dark:border-slate-700/60 shadow-xs transition-colors" data-preset="math">📐 Math & LaTeX</button>
+        <button class="preset-pill whitespace-nowrap px-3 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium border border-slate-200/70 dark:border-slate-700/60 shadow-xs transition-colors" data-preset="emojis">🚀 Emojis & UTF-8</button>
+        <button class="preset-pill whitespace-nowrap px-3 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium border border-slate-200/70 dark:border-slate-700/60 shadow-xs transition-colors" data-preset="whitespace">␣ Whitespace</button>
+        <button class="preset-pill whitespace-nowrap px-3 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium border border-slate-200/70 dark:border-slate-700/60 shadow-xs transition-colors" data-preset="chatml">💬 ChatML Tokens</button>
+        <button class="preset-pill whitespace-nowrap px-3 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium border border-slate-200/70 dark:border-slate-700/60 shadow-xs transition-colors" data-preset="glitch">⚡ Glitch Tokens</button>
+      </div>
+
+      <!-- Input Textarea Card -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden transition-all focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+        <div class="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+          <span class="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+            Prompt Input
+          </span>
+          <div class="flex items-center gap-2">
+            <!-- Upload File -->
+            <label class="cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1 font-medium px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+              </svg>
+              Load File
+              <input type="file" id="fileUpload" class="hidden" accept=".txt,.py,.js,.json,.md,.html">
+            </label>
+            <!-- Copy Text -->
+            <button id="copyTextBtn" class="hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1 font-medium px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+              Copy
+            </button>
+            <!-- Clear Text -->
+            <button id="clearBtn" class="hover:text-red-600 dark:hover:text-red-400 flex items-center gap-1 font-medium px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+              Clear
+            </button>
+          </div>
+        </div>
+        <textarea id="inputText" rows="4" class="w-full p-4 bg-transparent border-0 focus:ring-0 text-slate-800 dark:text-slate-100 font-mono text-sm leading-relaxed placeholder-slate-400 resize-y" placeholder="Type, paste, or select a preset prompt to inspect its tokenization..."></textarea>
+      </div>
+
+      <!-- Real-time Statistics Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <!-- Tokens -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-sm">
+          <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Tokens</div>
+          <div id="metricTokens" class="text-2xl font-extrabold text-blue-600 dark:text-blue-400 mt-1 font-mono">0</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">BPE segments</div>
+        </div>
+        <!-- Characters -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-sm">
+          <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Characters</div>
+          <div id="metricChars" class="text-2xl font-extrabold text-slate-800 dark:text-slate-100 mt-1 font-mono">0</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">Unicode chars</div>
+        </div>
+        <!-- Words -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-sm">
+          <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Words</div>
+          <div id="metricWords" class="text-2xl font-extrabold text-slate-800 dark:text-slate-100 mt-1 font-mono">0</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">Whitespace-split</div>
+        </div>
+        <!-- Tokens / Word -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-sm">
+          <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Tokens / Word</div>
+          <div id="metricRatio" class="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-1 font-mono">0.00</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">~1.1-1.3 is typical</div>
+        </div>
+        <!-- Bytes -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-sm">
+          <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">UTF-8 Bytes</div>
+          <div id="metricBytes" class="text-2xl font-extrabold text-slate-800 dark:text-slate-100 mt-1 font-mono">0</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">Raw byte size</div>
+        </div>
+        <!-- Chars / Token -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-sm">
+          <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Chars / Token</div>
+          <div id="metricCharsPerToken" class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 font-mono">0.00</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">Compression ratio</div>
+        </div>
+      </div>
+
+      <!-- Token Viewer & Controls -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        
+        <!-- Viewer Toolbar -->
+        <div class="px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+          
+          <!-- Left: Display Modes -->
+          <div class="flex items-center gap-1 bg-slate-200/70 dark:bg-slate-800 p-1 rounded-xl text-xs font-semibold">
+            <button class="mode-btn px-3 py-1.5 rounded-lg bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400 flex items-center gap-1.5 transition-all" data-mode="inline">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
+              </svg>
+              Flow View
+            </button>
+            <button class="mode-btn px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 transition-all" data-mode="chips">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+              </svg>
+              Chips View
+            </button>
+            <button class="mode-btn px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 transition-all" data-mode="table">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+              Table View
+            </button>
+            <button class="mode-btn px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 transition-all" data-mode="raw">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+              </svg>
+              Raw IDs
+            </button>
+          </div>
+
+          <!-- Right: Whitespace Toggle -->
+          <div class="flex items-center gap-4 text-xs">
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" id="whitespaceToggle" checked class="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700 focus:ring-blue-500">
+              <span class="text-slate-600 dark:text-slate-300 font-medium">Show Whitespace (·, ↵)</span>
+            </label>
+          </div>
+
+        </div>
+
+        <!-- Token Display Content Panels -->
+        <div id="tokenDisplayContainer" class="min-h-[220px]">
+          
+          <!-- 1. Inline Flow View -->
+          <div id="tokenFlowView" class="p-2"></div>
+
+          <!-- 2. Chips View -->
+          <div id="tokenChipsView" class="p-2 hidden"></div>
+
+          <!-- 3. Table View -->
+          <div id="tokenTableView" class="hidden overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-50 dark:bg-slate-800/70 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th class="px-4 py-2.5">#</th>
+                  <th class="px-4 py-2.5">Token String</th>
+                  <th class="px-4 py-2.5">Token ID</th>
+                  <th class="px-4 py-2.5">Bytes</th>
+                  <th class="px-4 py-2.5">Hex Dump</th>
+                  <th class="px-4 py-2.5">Classification</th>
+                </tr>
+              </thead>
+              <tbody id="tokenTableBody"></tbody>
+            </table>
+          </div>
+
+          <!-- 4. Raw JSON View -->
+          <div id="tokenRawView" class="p-4 hidden">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-xs text-slate-500 font-mono">Raw Token ID Array</span>
+              <button id="copyRawBtn" class="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+                Copy JSON
+              </button>
+            </div>
+            <pre id="tokenRawJson" class="p-4 bg-slate-900 text-slate-100 rounded-xl font-mono text-xs overflow-x-auto max-h-96"></pre>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Interactive Token Inspector Drawer -->
+      <div id="inspectorCard" class="bg-gradient-to-r from-blue-50/60 to-indigo-50/60 dark:from-slate-900 dark:to-slate-900 border border-blue-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+        
+        <div id="inspectorEmpty" class="text-center py-4 text-slate-400 dark:text-slate-500 text-xs flex items-center justify-center gap-2">
+          <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/>
+          </svg>
+          Click any colored token pill above to inspect its exact byte sequence, hex representation, and vocabulary ID.
+        </div>
+
+        <div id="inspectorContent" class="hidden">
+          <div class="flex items-center justify-between pb-3 border-b border-blue-200/50 dark:border-slate-800">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-blue-600 animate-ping"></span>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Token Inspector Details</h3>
+            </div>
+            <button id="closeInspectorBtn" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xs font-semibold">✕ Close</button>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-3 text-xs">
+            <div class="bg-white/80 dark:bg-slate-800/80 p-3 rounded-xl border border-blue-100 dark:border-slate-700/60">
+              <div class="text-slate-400 text-[10px] uppercase font-bold">Token String</div>
+              <div id="inspectText" class="font-mono font-bold text-sm text-blue-600 dark:text-blue-400 mt-0.5 truncate"></div>
+            </div>
+            <div class="bg-white/80 dark:bg-slate-800/80 p-3 rounded-xl border border-blue-100 dark:border-slate-700/60">
+              <div class="text-slate-400 text-[10px] uppercase font-bold">Vocabulary ID</div>
+              <div id="inspectId" class="font-mono font-bold text-sm text-slate-800 dark:text-slate-100 mt-0.5"></div>
+            </div>
+            <div class="bg-white/80 dark:bg-slate-800/80 p-3 rounded-xl border border-blue-100 dark:border-slate-700/60">
+              <div class="text-slate-400 text-[10px] uppercase font-bold">Bytes Breakdown</div>
+              <div id="inspectBytes" class="font-mono text-slate-700 dark:text-slate-300 mt-0.5"></div>
+            </div>
+            <div class="bg-white/80 dark:bg-slate-800/80 p-3 rounded-xl border border-blue-100 dark:border-slate-700/60">
+              <div class="text-slate-400 text-[10px] uppercase font-bold">Hex Encoding</div>
+              <div id="inspectHex" class="font-mono text-slate-700 dark:text-slate-300 mt-0.5 truncate"></div>
+            </div>
+            <div class="bg-white/80 dark:bg-slate-800/80 p-3 rounded-xl border border-blue-100 dark:border-slate-700/60">
+              <div class="text-slate-400 text-[10px] uppercase font-bold">Character Span</div>
+              <div id="inspectRange" class="font-mono text-slate-700 dark:text-slate-300 mt-0.5"></div>
+            </div>
+            <div class="bg-white/80 dark:bg-slate-800/80 p-3 rounded-xl border border-blue-100 dark:border-slate-700/60">
+              <div class="text-slate-400 text-[10px] uppercase font-bold">Classification</div>
+              <div id="inspectType" class="font-mono uppercase font-semibold text-purple-600 dark:text-purple-400 mt-0.5"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- =====================================================
+         TAB 2: BUILD VOCABULARY (INTERACTIVE BPE TRAINER)
+         ===================================================== -->
+    <div id="tabVocab" class="space-y-6 hidden">
+      <div class="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-2xl p-6 text-white shadow-lg">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs uppercase font-bold px-2 py-0.5 rounded-full bg-white/20 text-white font-mono">BPE Algorithmic Trainer</span>
+              <span class="text-xs font-semibold text-purple-200">Step-by-Step Learning</span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-bold mt-1">Interactive BPE Vocabulary Builder</h2>
+            <p class="text-xs sm:text-sm text-purple-100 mt-1 max-w-2xl">
+              Experience firsthand how LLMs build vocabulary from scratch. Train a Byte-Pair Encoding model on custom text, observe co-occurrence pair frequencies, and watch words dynamically re-tokenize!
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="vocabExportBtn" class="px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-semibold flex items-center gap-1.5 transition-all">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+              Export Vocab JSON
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Training Corpus Input Card -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+          <label class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Training Corpus / Dataset
+          </label>
+          <div class="flex items-center gap-2">
+            <button class="text-xs text-blue-600 dark:text-blue-400 hover:underline" onclick="document.getElementById('vocabCorpusInput').value='low lower lowest newest widest wider low low lowest'; document.getElementById('vocabCorpusInput').dispatchEvent(new Event('input'))">Load Textbook Corpus</button>
+            <span class="text-slate-300 dark:text-slate-700">•</span>
+            <button class="text-xs text-blue-600 dark:text-blue-400 hover:underline" onclick="document.getElementById('vocabCorpusInput').value='artificial intelligence neural networks transformer attention tokens deep learning language model'; document.getElementById('vocabCorpusInput').dispatchEvent(new Event('input'))">Load AI Corpus</button>
+          </div>
+        </div>
+        <textarea id="vocabCorpusInput" rows="2" class="w-full p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-xs leading-relaxed text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-purple-500">low lower lowest newest widest wider low low lowest</textarea>
+      </div>
+
+      <!-- Vocab Metrics & Action Bar -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm text-center">
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Vocabulary Size</div>
+          <div id="vocabStatsSize" class="text-2xl font-extrabold text-purple-600 dark:text-purple-400 font-mono mt-1">0</div>
+          <div class="text-[11px] text-slate-500">Base chars + learned merges</div>
+        </div>
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm text-center">
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Base Alphabet</div>
+          <div id="vocabStatsBase" class="text-2xl font-extrabold text-blue-600 dark:text-blue-400 font-mono mt-1">0</div>
+          <div class="text-[11px] text-slate-500">Unique starting characters</div>
+        </div>
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm text-center">
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Merges Executed</div>
+          <div id="vocabStatsMerges" class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono mt-1">0</div>
+          <div class="text-[11px] text-slate-500">BPE contract rules generated</div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm">
+        <div class="flex items-center gap-2">
+          <button id="vocabStepBtn" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold text-xs rounded-xl shadow-md flex items-center gap-1.5 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            ▶️ Step 1 Merge
+          </button>
+          <button id="vocabRun5Btn" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-xs rounded-xl border border-slate-200 dark:border-slate-700 transition-all">
+            ⚡ Run 5 Merges
+          </button>
+        </div>
+        <button id="vocabResetBtn" class="px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 font-semibold text-xs rounded-xl transition-all">
+          🔄 Reset Vocabulary
+        </button>
+      </div>
+
+      <!-- Split Layout: Candidate Pair Frequencies & Corpus Re-Tokenization -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        
+        <!-- Left: Adjacent Pair Frequencies -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+              </svg>
+              Candidate Pair Frequencies
+            </h3>
+            <span class="text-[11px] text-slate-400">Ranked by Co-occurrences</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase text-[10px] font-semibold border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th class="px-4 py-2">Rank</th>
+                  <th class="px-4 py-2">Adjacent Pair</th>
+                  <th class="px-4 py-2">Count</th>
+                  <th class="px-4 py-2">Status</th>
+                </tr>
+              </thead>
+              <tbody id="vocabPairTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right: Dynamic Corpus Segmentation & Rulebook -->
+        <div class="space-y-4">
+          <!-- Live Corpus Segmentation View -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                Corpus Re-Tokenization Live Preview
+              </h3>
+              <span class="text-[11px] text-slate-400">Updates on Every Merge</span>
+            </div>
+            <div id="vocabCorpusTokens" class="p-3 bg-slate-50/70 dark:bg-slate-950/60 rounded-xl border border-slate-100 dark:border-slate-800/80 min-h-[90px] leading-relaxed"></div>
+          </div>
+
+          <!-- Learned Merges Rulebook -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                </svg>
+                Learned BPE Merge Rules
+              </h3>
+              <span class="text-[11px] text-slate-400">Chronological Merges</span>
+            </div>
+            <div id="vocabMergesList" class="space-y-2 max-h-56 overflow-y-auto"></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- =====================================================
+         TAB 3: 3D VECTOR EMBEDDING SPACE VISUALIZER (NEW)
+         ===================================================== -->
+    <div id="tabEmbeddings" class="space-y-6 hidden">
+      <!-- 3D Banner -->
+      <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 rounded-2xl p-6 text-white shadow-lg">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs uppercase font-bold px-2 py-0.5 rounded-full bg-white/20 text-white font-mono">Interactive 3D Projections</span>
+              <span class="text-xs font-semibold text-emerald-200">Semantic Vector Space</span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-bold mt-1">3D Vector Embedding Space Visualizer</h2>
+            <p class="text-xs sm:text-sm text-emerald-100 mt-1 max-w-2xl">
+              Explore high-dimensional token representations projected into an interactive 3D coordinate space. Click and drag to orbit, scroll to zoom, hover to inspect nearest neighbors, or inject your own custom token!
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-black/20 text-white border border-white/20">
+              <span class="w-2 h-2 rounded-full bg-emerald-300 animate-ping"></span>
+              WebGL 3D Engine Active
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Single Custom Token Control Bar (Requested Feature) -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+          <label class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Add New Single Token into 3D Space
+          </label>
+          <div class="flex items-center gap-1.5 text-xs text-slate-400">
+            <span>Quick Inject:</span>
+            <button class="quick-add-token-pill px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-mono text-[11px]" data-token="quantum" data-cluster="ai">+ quantum</button>
+            <button class="quick-add-token-pill px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-mono text-[11px]" data-token="supernova" data-cluster="cosmos">+ supernova</button>
+            <button class="quick-add-token-pill px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-mono text-[11px]" data-token="jagyenswar" data-cluster="custom">+ jagyenswar</button>
+            <button class="quick-add-token-pill px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-mono text-[11px]" data-token="synthetic" data-cluster="ai">+ synthetic</button>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center gap-2">
+          <input type="text" id="addTokenInput" placeholder="Enter custom token string (e.g. quantum, jagyenswar, supernova)..." class="w-full sm:flex-1 p-2.5 bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-emerald-500">
+          
+          <select id="addTokenCluster" class="w-full sm:w-auto p-2.5 bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-emerald-500">
+            <option value="custom">Cluster: ✨ User Added (Pink)</option>
+            <option value="ai">Cluster: 🟣 AI & Computing (Indigo)</option>
+            <option value="cosmos">Cluster: 🟢 Nature & Cosmos (Emerald)</option>
+            <option value="animals">Cluster: 🟠 Animals & Life (Amber)</option>
+            <option value="actions">Cluster: 🔵 Actions & Verbs (Cyan)</option>
+            <option value="abstract">Cluster: 🔴 Abstract & Mind (Rose)</option>
+          </select>
+
+          <button id="addTokenBtn" class="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5 transition-all flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            ✨ Add to 3D Space
+          </button>
+        </div>
+      </div>
+
+      <!-- 3D Canvas Viewport Card -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden relative">
+        
+        <!-- Canvas Toolbar Overlay (Top) -->
+        <div class="px-4 py-3 bg-slate-50/90 dark:bg-slate-800/70 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+          
+          <!-- Cluster Filter Buttons -->
+          <div class="flex items-center gap-1 overflow-x-auto text-xs">
+            <span class="text-slate-400 font-medium whitespace-nowrap mr-1">Filter:</span>
+            <button class="cluster-filter-btn px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium text-xs transition-colors" data-cluster="all">All</button>
+            <button class="cluster-filter-btn px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 font-medium text-xs transition-colors" data-cluster="ai">AI</button>
+            <button class="cluster-filter-btn px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 font-medium text-xs transition-colors" data-cluster="cosmos">Cosmos</button>
+            <button class="cluster-filter-btn px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 font-medium text-xs transition-colors" data-cluster="animals">Animals</button>
+            <button class="cluster-filter-btn px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 font-medium text-xs transition-colors" data-cluster="actions">Actions</button>
+            <button class="cluster-filter-btn px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 font-medium text-xs transition-colors" data-cluster="abstract">Abstract</button>
+          </div>
+
+          <!-- Camera Tools -->
+          <div class="flex items-center gap-2">
+            <!-- Search Token in 3D -->
+            <div class="relative">
+              <input type="text" id="tokenSearchInput" placeholder="Find in 3D..." class="p-1.5 pl-7 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs w-32 focus:w-44 transition-all">
+              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </div>
+            
+            <button id="toggleAutoRotateBtn" class="p-1.5 rounded-lg bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 text-xs font-medium" title="Toggle Auto-Rotation">
+              🔄 Rotate
+            </button>
+            <button id="toggleLinesBtn" class="p-1.5 rounded-lg bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 text-xs font-medium" title="Toggle Constellation Lines">
+              🕸️ Lines
+            </button>
+            <button id="resetCameraBtn" class="p-1.5 rounded-lg bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 text-xs font-medium" title="Reset View Angle">
+              🎯 Center
+            </button>
+          </div>
+
+        </div>
+
+        <!-- 3D Canvas Container -->
+        <div id="embeddingsCanvasContainer" class="w-full h-[520px] bg-slate-950 relative overflow-hidden"></div>
+
+        <!-- Floating HUD Overlay (Bottom Left) -->
+        <div id="hudOverlay" class="absolute bottom-4 left-4 z-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-xl max-w-xs text-xs pointer-events-auto">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Vector Inspector</span>
+            <span id="hudClusterBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full font-mono">AI & Computing</span>
+          </div>
+          <div class="mt-2">
+            <div id="hudTokenName" class="text-base font-extrabold text-slate-900 dark:text-white font-mono">token</div>
+            <div id="hudCoordinates" class="text-[11px] text-slate-400 font-mono mt-0.5">(x: 120, y: 80, z: -40)</div>
+          </div>
+          <div class="mt-3">
+            <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Nearest Vector Neighbors</div>
+            <div id="hudNeighborsList" class="space-y-1"></div>
+          </div>
+        </div>
+
+        <!-- Help Tooltip (Bottom Right) -->
+        <div class="absolute bottom-4 right-4 z-20 bg-slate-900/80 text-slate-300 backdrop-blur-md px-3 py-1.5 rounded-xl text-[11px] font-mono pointer-events-none hidden sm:block">
+          🖱️ Drag: Orbit • Scroll: Zoom • Click node: Select
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- =====================================================
+         TAB 4: MODEL COMPARISON
+         ===================================================== -->
+    <div id="tabComparison" class="space-y-6 hidden">
+      <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
+        <h2 class="text-xl font-bold">Multi-Tokenizer Side-by-Side Comparison</h2>
+        <p class="text-sm text-blue-100 mt-1">
+          Observe how vocabulary size and pre-tokenization regex impact token count, language compression, and API inference costs across OpenAI, Meta, Google, and Anthropic.
+        </p>
+      </div>
+
+      <!-- Comparative Grid -->
+      <div id="comparisonGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+    </div>
+
+    <!-- =====================================================
+         TAB 5: LOGITS & SAMPLING SIMULATOR
+         ===================================================== -->
+    <div id="tabPredictor" class="space-y-6 hidden">
+      <div class="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-2xl p-6 text-white shadow-lg">
+        <h2 class="text-xl font-bold">Next-Token Logits & Autoregressive Sampling</h2>
+        <p class="text-sm text-purple-100 mt-1">
+          Explore how temperature, nucleus sampling (Top-P), Top-K, and repetition penalties shape the model's next-token probability distribution in real-time.
+        </p>
+      </div>
+
+      <!-- Prompt Preview -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Current Active Prompt</div>
+        <div id="predictorPromptPreview" class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl font-mono text-sm leading-relaxed border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 whitespace-pre-wrap"></div>
+      </div>
+
+      <!-- Hyperparameter Controls Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- Temperature -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Temperature (T)</label>
+            <span id="tempValue" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300">0.70</span>
+          </div>
+          <input type="range" id="tempSlider" min="0.01" max="2.0" step="0.05" value="0.70" class="w-full">
+          <p class="text-[11px] text-slate-400 mt-2">Lower = predictable & sharp. Higher = diverse & random.</p>
+        </div>
+
+        <!-- Top-P -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Top-P (Nucleus)</label>
+            <span id="topPValue" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">0.90</span>
+          </div>
+          <input type="range" id="topPSlider" min="0.10" max="1.0" step="0.05" value="0.90" class="w-full">
+          <p class="text-[11px] text-slate-400 mt-2">Retains top tokens whose cumulative probability reaches P.</p>
+        </div>
+
+        <!-- Top-K -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Top-K</label>
+            <span id="topKValue" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300">50</span>
+          </div>
+          <input type="range" id="topKSlider" min="1" max="50" step="1" value="50" class="w-full">
+          <p class="text-[11px] text-slate-400 mt-2">Limits pool to top K highest-scoring tokens.</p>
+        </div>
+
+        <!-- Repetition Penalty -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Repetition Penalty</label>
+            <span id="repValue" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300">1.00</span>
+          </div>
+          <input type="range" id="repSlider" min="1.0" max="2.0" step="0.05" value="1.00" class="w-full">
+          <p class="text-[11px] text-slate-400 mt-2">Penalizes tokens already present in the input prompt.</p>
+        </div>
+
+      </div>
+
+      <!-- Action Button & Candidates -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 class="font-bold text-slate-900 dark:text-white text-base">Predicted Next Token Distribution</h3>
+            <p class="text-xs text-slate-400">Click any candidate row below to append it, or use the sampling button.</p>
+          </div>
+          <button id="stepTokenBtn" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold text-xs rounded-xl shadow-md flex items-center gap-2 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+            </svg>
+            🎲 Sample & Step Next Token
+          </button>
+        </div>
+
+        <div id="candidatesContainer" class="space-y-2.5"></div>
+      </div>
+
+    </div>
+
+    <!-- =====================================================
+         TAB 6: COST & EFFICIENCY ESTIMATOR
+         ===================================================== -->
+    <div id="tabCost" class="space-y-6 hidden">
+      <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 rounded-2xl p-6 text-white shadow-lg">
+        <h2 class="text-xl font-bold">Real-Time LLM Inference Cost Estimator</h2>
+        <p class="text-sm text-emerald-100 mt-1">
+          Calculate projected input and output API costs based on current official provider pricing per million tokens.
+        </p>
+      </div>
+
+      <!-- Cost Sliders -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-sm font-bold text-slate-700 dark:text-slate-300">Simulated Output Tokens / Request</label>
+            <span id="costOutputValue" class="text-sm font-mono font-bold px-2.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">500</span>
+          </div>
+          <input type="range" id="costOutputSlider" min="50" max="4000" step="50" value="500" class="w-full">
+          <p class="text-xs text-slate-400 mt-2">Adjust expected response size (average LLM response is 300 - 800 tokens).</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-sm font-bold text-slate-700 dark:text-slate-300">Projected Monthly Requests</label>
+            <span id="costVolumeValue" class="text-sm font-mono font-bold px-2.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300">1,000</span>
+          </div>
+          <input type="range" id="costVolumeSlider" min="100" max="50000" step="500" value="1000" class="w-full">
+          <p class="text-xs text-slate-400 mt-2">Scale across your user base or daily API cron workload.</p>
+        </div>
+      </div>
+
+      <!-- Cost Comparison Table -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 dark:bg-slate-800/70 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200 dark:border-slate-800">
+              <tr>
+                <th class="px-5 py-3">Model & Context</th>
+                <th class="px-5 py-3">Input / 1M</th>
+                <th class="px-5 py-3">Output / 1M</th>
+                <th class="px-5 py-3">Single Request Cost</th>
+                <th class="px-5 py-3">Monthly Estimated Cost</th>
+              </tr>
+            </thead>
+            <tbody id="costTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+         TAB 7: TOKENIZATION 101 GUIDE
+         ===================================================== -->
+    <div id="tabGuide" class="space-y-6 hidden">
+      <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 rounded-2xl p-6 text-white shadow-lg">
+        <h2 class="text-xl font-bold">Tokenization 101: How LLMs Read the World</h2>
+        <p class="text-sm text-amber-100 mt-1">
+          Everything you need to know about Byte-Pair Encoding (BPE), vocabulary compression, and tokenization quirks.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        
+        <!-- Card 1: What is a Token? -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+          <div class="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 flex items-center justify-center font-bold mb-3">1</div>
+          <h3 class="font-bold text-slate-900 dark:text-white text-base">What is a Token?</h3>
+          <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-2">
+            LLMs cannot read text directly. Instead, text is sliced into chunks of characters called <strong>tokens</strong>, which map directly to numbers (integers in a fixed vocabulary). 
+            On average, <strong>1 token ≈ 4 characters</strong> or <strong>0.75 words</strong> in English.
+          </p>
+        </div>
+
+        <!-- Card 2: Byte-Pair Encoding (BPE) -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+          <div class="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-900/60 text-purple-600 dark:text-purple-300 flex items-center justify-center font-bold mb-3">2</div>
+          <h3 class="font-bold text-slate-900 dark:text-white text-base">How Byte-Pair Encoding Works</h3>
+          <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-2">
+            BPE begins with raw individual UTF-8 bytes and iteratively merges the most frequently occurring character pairs into new compound tokens (e.g. <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">'t'</code> + <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">'h'</code> → <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">'th'</code> → <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">'the'</code>) until reaching the target vocabulary limit.
+          </p>
+        </div>
+
+        <!-- Card 3: Why LLMs Struggle with Spelling & Math -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+          <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-300 flex items-center justify-center font-bold mb-3">3</div>
+          <h3 class="font-bold text-slate-900 dark:text-white text-base">Why LLMs Can't Count Letters</h3>
+          <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-2">
+            When you ask an LLM <em>"How many 'r's are in strawberry?"</em>, it struggles because it does not see the individual letters <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">s-t-r-a-w-b-e-r-r-y</code>. It only sees two abstract token IDs: <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">[straw, berry]</code>!
+          </p>
+        </div>
+
+        <!-- Card 4: The Multilingual Revolution -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+          <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-300 flex items-center justify-center font-bold mb-3">4</div>
+          <h3 class="font-bold text-slate-900 dark:text-white text-base">The Multilingual Token Revolution</h3>
+          <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-2">
+            Older tokenizers (GPT-2, GPT-3) had 50k vocabularies and broke non-Latin languages (Japanese, Hindi, Arabic) into 3 tokens per single character! Modern models (GPT-4o with 200k vocab, Llama 3 with 128k) compress global languages up to <strong>300% more efficiently</strong>.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- =====================================================
+       BEAUTIFUL POLISHED FOOTER WITH WORK CREDITS TO JAGYENSWAR SA
+       ===================================================== -->
+  <footer class="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      
+      <!-- Top Card: Work Credits Banner -->
+      <div class="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-800/80 dark:via-slate-800/60 dark:to-indigo-950/40 border border-blue-200/60 dark:border-slate-700/60 rounded-2xl p-6 mb-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        
+        <div class="flex items-center gap-4 text-center sm:text-left">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 text-lg font-bold flex-shrink-0">
+            JS
+          </div>
+          <div>
+            <div class="flex items-center justify-center sm:justify-start gap-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Masterwork Credits</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                ✨ Verified Submission
+              </span>
+            </div>
+            <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white mt-0.5">
+              Designed & Engineered by <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">Jagyenswar Sa</span>
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Next-generation interactive LLM Tokenizer & Visualizer • Clean-room architecture inspired by modern AI labs
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 shadow-sm">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            100% Client-Side
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 shadow-sm">
+            🔒 Zero Data Sent
+          </span>
+        </div>
+
+      </div>
+
+      <!-- Bottom Links & Meta -->
+      <div class="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-4">
+        <p>© 2026 LLM Token Explorer. All rights reserved. Crafted by Jagyenswar Sa.</p>
+        <div class="flex items-center space-x-6">
+          <a href="#tabExplorer" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors" onclick="document.querySelector('[data-tab=\'explorer\']').click()">Token Explorer</a>
+          <a href="#tabVocab" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors" onclick="document.querySelector('[data-tab=\'vocab\']').click()">Build Vocab</a>
+          <a href="#tabEmbeddings" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors" onclick="document.querySelector('[data-tab=\'embeddings\']').click()">3D Embeddings</a>
+          <a href="#tabComparison" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors" onclick="document.querySelector('[data-tab=\'comparison\']').click()">Comparison</a>
+          <a href="#tabPredictor" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors" onclick="document.querySelector('[data-tab=\'predictor\']').click()">Sampling</a>
+          <a href="#tabCost" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors" onclick="document.querySelector('[data-tab=\'cost\']').click()">Cost</a>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/bundle.js"></script>
+</body>
+</html>

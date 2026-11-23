@@ -1,0 +1,232 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code, kbd, samp, pre, .font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.7);
+}
+
+/* ==========================================================
+   7-HUE TOKEN COLOR SYSTEM (Light & Dark Mode)
+   Optimized for maximum contrast, readability & distinct edges
+   ========================================================== */
+
+/* Token 0 - Sky / Cyan */
+.token-color-0 {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border-color: #7dd3fc;
+}
+.dark .token-color-0 {
+  background-color: rgba(14, 165, 233, 0.18);
+  color: #7dd3fc;
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+/* Token 1 - Purple / Violet */
+.token-color-1 {
+  background-color: #f3e8ff;
+  color: #7e22ce;
+  border-color: #d8b4fe;
+}
+.dark .token-color-1 {
+  background-color: rgba(168, 85, 247, 0.18);
+  color: #d8b4fe;
+  border-color: rgba(192, 132, 252, 0.4);
+}
+
+/* Token 2 - Amber / Orange */
+.token-color-2 {
+  background-color: #fef3c7;
+  color: #b45309;
+  border-color: #fcd34d;
+}
+.dark .token-color-2 {
+  background-color: rgba(245, 158, 11, 0.18);
+  color: #fde68a;
+  border-color: rgba(251, 191, 36, 0.4);
+}
+
+/* Token 3 - Emerald / Green */
+.token-color-3 {
+  background-color: #dcfce7;
+  color: #15803d;
+  border-color: #86efac;
+}
+.dark .token-color-3 {
+  background-color: rgba(34, 197, 94, 0.18);
+  color: #86efac;
+  border-color: rgba(74, 222, 128, 0.4);
+}
+
+/* Token 4 - Rose / Pink */
+.token-color-4 {
+  background-color: #ffe4e6;
+  color: #be123c;
+  border-color: #fda4af;
+}
+.dark .token-color-4 {
+  background-color: rgba(244, 63, 94, 0.18);
+  color: #fda4af;
+  border-color: rgba(251, 113, 133, 0.4);
+}
+
+/* Token 5 - Indigo / Blue */
+.token-color-5 {
+  background-color: #e0e7ff;
+  color: #4338ca;
+  border-color: #a5b4fc;
+}
+.dark .token-color-5 {
+  background-color: rgba(99, 102, 241, 0.18);
+  color: #a5b4fc;
+  border-color: rgba(129, 140, 248, 0.4);
+}
+
+/* Token 6 - Teal / Turquoise */
+.token-color-6 {
+  background-color: #ccfbf1;
+  color: #0f766e;
+  border-color: #5eead4;
+}
+.dark .token-color-6 {
+  background-color: rgba(20, 184, 166, 0.18);
+  color: #5eead4;
+  border-color: rgba(45, 212, 191, 0.4);
+}
+
+/* Token pill base style */
+.token-pill {
+  display: inline-block;
+  padding: 1px 4px;
+  margin: 1.5px 1px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  line-height: 1.4;
+  position: relative;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.token-pill:hover {
+  transform: translateY(-1.5px) scale(1.02);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.12);
+  z-index: 20;
+}
+
+.token-pill.active-inspect {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+  transform: translateY(-2px) scale(1.04);
+}
+
+/* Whitespace Visualization */
+.show-whitespace .ws-space {
+  position: relative;
+}
+.show-whitespace .ws-space::before {
+  content: '·';
+  opacity: 0.45;
+  font-weight: 700;
+  display: inline-block;
+  color: currentColor;
+}
+
+.show-whitespace .ws-newline {
+  position: relative;
+}
+.show-whitespace .ws-newline::before {
+  content: '↵\a';
+  opacity: 0.55;
+  font-weight: 700;
+  display: inline-block;
+  color: currentColor;
+}
+
+.show-whitespace .ws-tab {
+  position: relative;
+}
+.show-whitespace .ws-tab::before {
+  content: '⇥';
+  opacity: 0.55;
+  display: inline-block;
+}
+
+/* Glassmorphism effects */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Range input customization */
+input[type=range] {
+  accent-color: #2563eb;
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s infinite;
+}
+
+/* 3D Embedding Canvas Viewport */
+#embeddingsCanvasContainer {
+  background: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%);
+}
+
+html:not(.dark) #embeddingsCanvasContainer {
+  background: radial-gradient(circle at 50% 50%, #f8fafc 0%, #e2e8f0 100%);
+}
+
+/* Logo Subtle Micro-interactions */
+.logo-prism-container {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.logo-prism-container:hover {
+  transform: translateY(-1px);
+}
+
+
